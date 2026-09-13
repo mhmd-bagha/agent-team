@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "max_parallel_agents": 6,
+  "max_convergence_rounds": 8,
+  "confidence_target": 0.95,
+  "critical_findings_block_release": true,
+  "high_findings_block_release": true,
+  "require_requirement_traceability": true,
+  "require_test_evidence": true,
+  "require_final_independent_verifier": true,
+  "allow_destructive_git": false,
+  "allow_sudo": false,
+  "default_isolation": "worktree-on-overlap",
+  "progress_reporting": "phase-and-batch"
+}
