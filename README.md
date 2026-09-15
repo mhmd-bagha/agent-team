@@ -15,6 +15,7 @@ A provider-neutral senior-engineering orchestration layer for Claude Code, DeepS
 - [Stop Conditions & Hard Blockers](#stop-conditions--hard-blockers)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Memory & Speed](#memory--speed)
 - [Parallelism, Worktrees & Delegation](#parallelism-worktrees--delegation)
 - [Verification & Confidence Model](#verification--confidence-model)
 - [Progress Reports](#progress-reports)
@@ -46,7 +47,8 @@ This repository contains orchestration policy and prompts. It does not claim an 
 - **Automatic convergence loop (up to 8 rounds).** Any review or verification finding becomes a corrective task: fix, rerun affected checks, review again — until all gates pass or a hard blocker is documented.
 - **Adversarial review by default.** An independent reviewer assumes the implementation is wrong; security and performance reviewers attack auth, input handling, injection, secrets, unsafe I/O, N+1s, leaks, and blocking work. Critical/high findings block release.
 - **Provider adapters.** Claude Code, DeepSeek Harness (skill discovery verified against the installed release), and a portable contract for ACP/Codex/Kimi/KUN-style runners — one engineering policy, no per-provider duplication.
-- **One-command installers plus always-on wiring.** `./scripts/bootstrap-claude.sh` and `./scripts/bootstrap-dsh.sh` install per-project or user-global; optional always-on wiring in `~/.claude/CLAUDE.md` / `~/.dsh/AGENTS.md` makes the team fire on every implementation message with no slash command.
+- **Auto-memory + tier router.** Project memory (`memory/MEMORY.md`) is read at intake and updated at the final gate, so conventions and past fixes compound across sessions; requests route to the lowest fitting tier — instant answer, scoped single-agent fix, or full team — so one-line fixes stay fast.
+- **One-command installers plus always-on wiring.** `./scripts/bootstrap-claude.sh` and `./scripts/bootstrap-dsh.sh` install per-project or user-global (including a starter `memory/MEMORY.md` that is never overwritten); optional always-on wiring in `~/.claude/CLAUDE.md` / `~/.dsh/AGENTS.md` makes the team fire on every implementation message with no slash command.
 
 ## How It Works: The Lifecycle
 
@@ -244,6 +246,20 @@ FINDINGS: reviewer approved; awaiting final-verifier verdict
 NEXT: CONVERGED or BLOCKED on the flaky-test infrastructure
 ```
 
+## Memory & Speed
+
+Project memory lives at `memory/MEMORY.md` (shipped as a starter template by both installers; existing memory is never overwritten). The loop: team-lead reads it at intake, every delegation inherits the relevant excerpts (facts, conventions, preferences, past issue→resolution rows), and the final-verifier appends session learnings (decisions, new conventions, resolutions, preference notes) — so the team gets smarter every session instead of re-learning your repo.
+
+Requests route to the lowest tier that fits:
+
+| Tier | When | What runs |
+| --- | --- | --- |
+| **Tier 0 — instant** | Greetings, factual Q&A, explanations, how-things-work | Direct answer; no delegation, no reports |
+| **Tier 1 — scoped team** | Single-file fix or small addition (e.g. "fix the off-by-one in `sum.js`") | Implementer only + verification evidence |
+| **Tier 2 — full team** | Features, refactors, migrations, multi-file work | Full 10-phase protocol with convergence |
+
+Route to the lowest tier that fits; escalate when uncertainty or blast radius grows.
+
 ## Parallelism, Worktrees & Delegation
 
 Parallelize only tasks whose read/write sets do not conflict and whose outputs do not form a dependency chain (`docs/WORKFLOW.md`):
@@ -340,6 +356,8 @@ NEXT: <next action>
 ├── TEAM.md                      # the contract
 ├── README.md                    # this file
 ├── .gitignore
+├── memory/
+│   └── MEMORY.md                # project memory template (read at intake, updated at gate)
 ├── config/
 │   └── team-policy.json         # parallelism, rounds, confidence, blocking rules
 ├── docs/

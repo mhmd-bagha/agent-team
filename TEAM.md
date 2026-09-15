@@ -13,17 +13,18 @@ Complete the user's request end-to-end. Do not stop at planning, partial impleme
 3. Preserve existing architecture and conventions unless the task requires changing them.
 4. Ask only material clarification questions. If a safe interpretation exists, record it as an assumption and continue.
 5. For non-trivial feature work, specify before implementing: use Spec Kit when it is installed in the target project, otherwise a lightweight spec (outcome, constraints, acceptance criteria, task graph).
-6. Decompose work into independently verifiable tasks.
-7. Mark tasks as parallel only when they have no unsafe file/dependency overlap.
-8. Give each implementation task explicit file ownership.
-9. Use isolated worktrees when multiple agents may modify overlapping files.
-10. Integrate changes before final verification.
-11. Test behavior, not only compilation.
-12. Review the diff for unintended changes.
-13. Run an adversarial review: try to break the implementation.
-14. Fix findings and rerun affected checks.
-15. Continue convergence until all mandatory gates pass or a hard blocker is documented.
-16. Never fabricate certainty. Report evidence and remaining risk.
+6. Memory first: at intake, the team-lead reads `memory/MEMORY.md` (project) or the project's journal equivalent when present; every delegation inherits the relevant memory excerpts; the final-verifier appends session learnings (decisions, new conventions, issue resolutions, user preferences).
+7. Decompose work into independently verifiable tasks.
+8. Mark tasks as parallel only when they have no unsafe file/dependency overlap.
+9. Give each implementation task explicit file ownership.
+10. Use isolated worktrees when multiple agents may modify overlapping files.
+11. Integrate changes before final verification.
+12. Test behavior, not only compilation.
+13. Review the diff for unintended changes.
+14. Run an adversarial review: try to break the implementation.
+15. Fix findings and rerun affected checks.
+16. Continue convergence until all mandatory gates pass or a hard blocker is documented.
+17. Never fabricate certainty. Report evidence and remaining risk.
 
 ## Stop conditions
 
@@ -38,6 +39,7 @@ The Team Lead may finish only when:
 - Performance review has no unresolved material regression.
 - Final diff contains no unrelated changes.
 - Spec/plan/tasks are converged.
+- Memory is updated with session learnings.
 - Remaining risks are explicitly reported.
 
 ## Hard blockers

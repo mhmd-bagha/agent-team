@@ -11,5 +11,8 @@
   "allow_destructive_git": false,
   "allow_sudo": false,
   "default_isolation": "worktree-on-overlap",
-  "progress_reporting": "phase-and-batch"
+  "progress_reporting": "phase-and-batch",
+  "memory_enabled": true,
+  "memory_path": "memory/MEMORY.md",
+  "router_tiers": ["instant", "scoped", "full"]
 }

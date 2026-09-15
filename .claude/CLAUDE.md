@@ -17,6 +17,10 @@ Act as a senior software engineer. Prefer minimal, high-quality changes over bro
 
 ## Workflow
 
+Route every request to the lowest tier that fits — Tier 0 instant (greetings, factual Q&A, explanations: answer directly, no delegation), Tier 1 scoped team (single-file fix or small addition: implementer only + verification evidence), Tier 2 full team (features, refactors, migrations, multi-file work: full protocol below). Escalate when uncertainty or blast radius grows.
+
+Load `memory/MEMORY.md` at intake when present; update it at completion.
+
 For non-trivial tasks, specify before implementing. When Spec Kit is installed in the target project, run its flow:
 
 1. `/speckit.constitution`
