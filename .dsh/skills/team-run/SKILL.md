@@ -17,6 +17,30 @@ Use this skill when the user asks to implement, fix, refactor, debug, migrate, o
 
 Route to the lowest tier that fits; escalate when uncertainty or blast radius grows.
 
+### Jev decision layer (advisory, optional)
+
+When the target project has `jev/` configured and reachable (`JEV_ENABLED=true`
+plus endpoint/model/key), the team-lead may consult it as a fast typed-judgment
+aid at these points — routing, tier selection, risk classification, tool gating,
+verification signals, convergence votes, context-compaction votes. Rules:
+
+- Jev judges, policy controls: hard policy (`config/team-policy.json`:
+  no sudo, no destructive git, blocking severities, max 8 convergence rounds)
+  and explicit user authorization always override Jev. Jev may only tighten
+  (escalate risk, request review, block), never loosen.
+- Below the gate threshold (routing 0.90, risk 0.95, tool 0.98, verification
+  0.95) or on any Jev timeout/error: fall back to the deterministic rule, then
+  to team-lead judgment. The team works fully with `JEV_ENABLED=false`.
+- Batch independent questions into one Jev call; never put Jev in a hot loop.
+- Verification/convergence: Jev signals (e.g. `readyForFinalVerification`) are
+  hints only — concrete evidence (checks run, tests passed, diff inspected)
+  remains mandatory. Critical/high security findings block regardless of Jev.
+- Never send secrets to Jev; logs record decisions and confidence, never keys.
+
+See `docs/JEV.md` for the full decision catalog, thresholds, and fallbacks
+(under DeepSeek Harness skill installs, the same file ships as `JEV.md`
+alongside this skill).
+
 ### Phase 0 — Intake
 Understand the desired outcome, constraints, acceptance criteria, and risk.
 

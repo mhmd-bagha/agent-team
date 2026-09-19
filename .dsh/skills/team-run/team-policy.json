@@ -14,5 +14,16 @@
   "progress_reporting": "phase-and-batch",
   "memory_enabled": true,
   "memory_path": "memory/MEMORY.md",
-  "router_tiers": ["instant", "scoped", "full"]
+  "router_tiers": ["instant", "scoped", "full"],
+  "jev": {
+    "enabled": true,
+    "endpoint": "",
+    "model": "",
+    "timeoutMs": 1000,
+    "defaultConfidenceThreshold": 0.95,
+    "routing": { "enabled": true, "threshold": 0.9 },
+    "riskGate": { "enabled": true, "threshold": 0.95 },
+    "toolGate": { "enabled": true, "threshold": 0.98 },
+    "verification": { "enabled": true, "threshold": 0.95 }
+  }
 }

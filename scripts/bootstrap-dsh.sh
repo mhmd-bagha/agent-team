@@ -61,6 +61,7 @@ fi
 cp "${agent_files[@]}" "$DEST/team-run/agents/"
 cp "$ROOT/TEAM.md" "$DEST/team-run/TEAM.md"
 cp "$ROOT/config/team-policy.json" "$DEST/team-run/team-policy.json"
+cp "$ROOT/docs/JEV.md" "$DEST/team-run/JEV.md"
 mkdir -p "$DEST/team-run/memory"
 if [[ ! -f "$DEST/team-run/memory/MEMORY.md" ]]; then
   cp "$ROOT/memory/MEMORY.md" "$DEST/team-run/memory/MEMORY.md"

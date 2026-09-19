@@ -30,7 +30,7 @@ A provider-neutral senior-engineering orchestration layer for Claude Code, DeepS
 
 A single agent asked to "build the feature" tends to do three things: skim the repo, write a big diff, and declare victory. This repository replaces that with a team contract (`TEAM.md`): one lead owns the request from intake to verified delivery, work is decomposed into independently verifiable tasks, specialists handle research, design, implementation, testing, and adversarial review in parallel where safe, and nothing ships until an independent verifier confirms every requirement against real evidence — commands run, tests passed, diffs inspected.
 
-The contract is provider-neutral. The same role prompts and workflow run on Claude Code (native agents and skills), on DeepSeek Harness (subagents plus filesystem-discovered skills), and on any other runner that can receive a task prompt, inspect a repo, edit a scope, run commands, and return a structured report (see `providers/portable-agent.md`).
+The contract is provider-neutral. The same role prompts and workflow run on Claude Code (native agents and skills), on DeepSeek Harness (subagents plus filesystem-discovered skills), on OpenCode (`@`-mentioned subagents plus skills), and on any other runner that can receive a task prompt, inspect a repo, edit a scope, run commands, and return a structured report (see `providers/portable-agent.md`).
 
 This repository contains orchestration policy and prompts. It does not claim an LLM can mathematically prove a change is bug-free. The final gate requires concrete evidence: requirements coverage, checks, tests, review findings, and unresolved-risk accounting. The verdict is `CONVERGED` or it is not done — never "100% bug-free".
 
@@ -48,7 +48,7 @@ This repository contains orchestration policy and prompts. It does not claim an 
 - **Adversarial review by default.** An independent reviewer assumes the implementation is wrong; security and performance reviewers attack auth, input handling, injection, secrets, unsafe I/O, N+1s, leaks, and blocking work. Critical/high findings block release.
 - **Provider adapters.** Claude Code, DeepSeek Harness (skill discovery verified against the installed release), and a portable contract for ACP/Codex/Kimi/KUN-style runners — one engineering policy, no per-provider duplication.
 - **Auto-memory + tier router.** Project memory (`memory/MEMORY.md`) is read at intake and updated at the final gate, so conventions and past fixes compound across sessions; requests route to the lowest fitting tier — instant answer, scoped single-agent fix, or full team — so one-line fixes stay fast.
-- **One-command installers plus always-on wiring.** `./scripts/bootstrap-claude.sh` and `./scripts/bootstrap-dsh.sh` install per-project or user-global (including a starter `memory/MEMORY.md` that is never overwritten); optional always-on wiring in `~/.claude/CLAUDE.md` / `~/.dsh/AGENTS.md` makes the team fire on every implementation message with no slash command.
+- **One-command installers plus always-on wiring.** `./scripts/bootstrap-claude.sh`, `./scripts/bootstrap-dsh.sh`, and `./scripts/bootstrap-opencode.sh` install per-project or user-global (including a starter `memory/MEMORY.md` that is never overwritten); optional always-on wiring in `~/.claude/CLAUDE.md` / `~/.dsh/AGENTS.md` makes the team fire on every implementation message with no slash command.
 
 ## How It Works: The Lifecycle
 
@@ -198,6 +198,22 @@ User-global install (available in every session — DSH auto-discovers `${DSH_HO
 
 Then delegate per `providers/deepseek-harness.md`: team-lead as the root agent, specialists as subagents (background for independent research/verification), implementers scoped or as Claude Code children, and the final-verifier as an independent child session. Role prompts ship as resources under `team-run/` (`TEAM.md`, `team-policy.json`, `agents/*.md`).
 
+### OpenCode
+
+Per-project install (OpenCode auto-discovers `<project>/.opencode/skills` and `<project>/.opencode/agents`):
+
+```bash
+./scripts/bootstrap-opencode.sh /path/to/project
+```
+
+User-global install (available in every session — OpenCode auto-discovers `~/.config/opencode/skills` and `~/.config/opencode/agents`; running sessions pick it up on reload):
+
+```bash
+./scripts/bootstrap-opencode.sh --global
+```
+
+Invoke specialists with `@`-mentions (e.g. `@team-lead`, `@implementer`) or let the primary agent delegate via the Task tool; run the finish through the `final-verification` skill. (OpenCode also reads `~/.claude/skills` and `~/.agents/skills`, so the Claude user-global install below covers skills too — the native install above additionally ships role agents plus `TEAM.md`/policy/`JEV.md` resources alongside the skills.)
+
 ### KUN / Kimi / other agents
 
 Use `providers/portable-agent.md`: any runner qualifies if it can (1) receive a complete task prompt, (2) inspect the repository, (3) edit its assigned scope, (4) run commands, and (5) return a structured report. Map the roles onto whatever delegation the runner offers — ACP spawning, native app/server integration, skills, slash commands, or subprocesses. Do not duplicate the engineering policy per provider.
@@ -328,7 +344,8 @@ NEXT: <next action>
 | File | Purpose |
 | --- | --- |
 | `TEAM.md` | The team contract: mission, 16 operating rules, stop conditions, hard blockers |
-| `config/team-policy.json` | Policy knobs: 6 parallel agents, 8 convergence rounds, 0.95 target, blocking severities, required gates |
+| `config/team-policy.json` | Policy knobs: 6 parallel agents, 8 convergence rounds, 0.95 target, blocking severities, required gates — plus the `jev` decision-layer section (gates, thresholds, timeout; secrets via `JEV_*` env) |
+| `jev/` | Jev typed decision layer (provider-neutral TS): client, decisions, policy fallbacks, telemetry, fake test adapter. Disabled entirely with `JEV_ENABLED=false` |
 | `.claude/CLAUDE.md` | Engineering standard, specify-first workflow, reporting rule for Claude-installed projects |
 | `.claude/agents/*.md` | The 9 role prompts (source of truth) |
 | `.claude/skills/team-run/SKILL.md` | The 10-phase team workflow skill (source of truth) |
@@ -337,8 +354,10 @@ NEXT: <next action>
 | `providers/deepseek-harness.md` | DSH role mapping, verified skill-discovery roots, install commands |
 | `providers/portable-agent.md` | 5-capability contract + mapping for ACP/Codex/Kimi/KUN-style runners |
 | `docs/WORKFLOW.md` | Parallelism diagram, worktree policy, confidence scoring, reporting guidance |
+| `docs/JEV.md` | Jev decision layer: architecture, decision catalog, thresholds, safety precedence, fallbacks, env config, observability, testing |
 | `scripts/bootstrap-claude.sh` | Per-project Claude installer |
 | `scripts/bootstrap-dsh.sh` | Per-project + `--global` DSH installer |
+| `scripts/bootstrap-opencode.sh` | Per-project + `--global` OpenCode installer (skills + agents) |
 | `scripts/report.sh` | One-shot structured progress report emitter |
 | `hooks/verify-before-stop.sh` | Stop-gate example listing the project's available verification scripts |
 
@@ -347,6 +366,7 @@ NEXT: <next action>
 - `scripts/bootstrap-claude.sh [target]` — installs `TEAM.md`, `CLAUDE.md`, agents, and both skills into a project's `.claude/` (defaults to `.`).
 - `scripts/bootstrap-dsh.sh <project> | --global [--help]` — installs both skills plus role resources into `<project>/.dsh/skills` or `${DSH_HOME:-~/.dsh}/skills`; rejects unknown flags, guards the agent glob, idempotent.
 - `scripts/report.sh <phase> <status> <done> <evidence> [findings] [next]` — emits one team progress report in `STATUS/DONE/EVIDENCE/FINDINGS/NEXT` format.
+- `scripts/jev-doctor.sh` — Jev diagnostics (enabled, endpoint/key/model configured, connectivity, latency, config validity; never prints the key).
 - `hooks/verify-before-stop.sh` — optional stop-gate example: lists which of `lint`, `typecheck`, `test`, `build` the current project actually offers, so a final report cannot claim checks that do not exist.
 
 ## Repository Layout
@@ -361,13 +381,18 @@ NEXT: <next action>
 ├── config/
 │   └── team-policy.json         # parallelism, rounds, confidence, blocking rules
 ├── docs/
-│   └── WORKFLOW.md              # parallelism, worktrees, confidence, reporting
+│   ├── WORKFLOW.md              # parallelism, worktrees, confidence, reporting
+│   └── JEV.md                   # Jev decision layer (advisory; disable with JEV_ENABLED=false)
+├── jev/                         # typed decision layer (TS): client, decisions,
+│                                # policy fallbacks, telemetry, fake test adapter
+│                                # (typecheck: npm run typecheck; tests: npm test)
 ├── providers/
 │   ├── deepseek-harness.md      # DSH role mapping + verified discovery roots
 │   └── portable-agent.md        # 5-capability contract for other runners
 ├── scripts/
 │   ├── bootstrap-claude.sh      # per-project Claude installer
 │   ├── bootstrap-dsh.sh         # per-project + global DSH installer
+│   ├── bootstrap-opencode.sh    # per-project + global OpenCode installer (skills + agents)
 │   └── report.sh                # progress-report emitter
 ├── hooks/
 │   └── verify-before-stop.sh    # stop-gate example

@@ -1,0 +1,19 @@
+{
+  "name": "agent-team",
+  "version": "1.1.0",
+  "description": "Universal Agent Team orchestration policy + Jev typed decision layer (provider-neutral).",
+  "type": "commonjs",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "test": "npm run build && node --test dist/jev/*.test.js",
+    "doctor:jev": "bash scripts/jev-doctor.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

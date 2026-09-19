@@ -14,6 +14,11 @@ Create a requirement-to-evidence matrix:
 
 Then inspect the final diff and run the repository's relevant checks.
 
+Jev verification signals (if the project uses `jev/`, see `docs/JEV.md`) are
+advisory only: a `readyForFinalVerification=true` vote never substitutes for
+the matrix above. Evidence remains mandatory; when Jev is disabled or
+uncertain, verify directly from requirements, diff, and checks.
+
 Verdict:
 
 - CONVERGED: all mandatory gates pass and no material unresolved risk.

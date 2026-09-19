@@ -14,6 +14,9 @@ Recommended mapping:
 - Codex-compatible agent → use its native app/server integration
 - Claude Code → native Agent Teams/subagents
 - DeepSeek Harness → dsh-subagent/workflow
+- OpenCode → `@`-mentioned subagents from `.opencode/agents/` (or global
+  `~/.config/opencode/agents/`) plus `team-run` / `final-verification` skills;
+  install with `./scripts/bootstrap-opencode.sh <project>` or `--global`
 - Kimi/KUN/other skill-based agent → install the skills and invoke the equivalent commands
 
 The engineering contract remains provider-neutral.
