@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { JevError } from "./errors.js";
-import { LlmJevClient, openaiCompatibleCompletion } from "./llm.js";
+import { LlmJevClient, openaiCompatibleCompletion, openaiResponsesCompletion } from "./llm.js";
 import { TEAM_ROLES } from "./types.js";
 
 function roleProbs(selected: string, confidence: number): Record<string, number> {
@@ -120,5 +120,28 @@ describe("openaiCompatibleCompletion", () => {
     const fetchImpl = (async () => new Response("no", { status: 401 })) as typeof fetch;
     const complete = openaiCompatibleCompletion({ endpoint: "https://x.example", apiKey: "k", model: "m", fetchImpl });
     await assert.rejects(() => complete("s", "u"), (err: unknown) => err instanceof JevError && err.code === "AUTH");
+  });
+});
+
+describe("openaiResponsesCompletion", () => {
+  it("posts /responses and concatenates output text", async () => {
+    let seenUrl = "";
+    const fetchImpl = (async (url: string | URL | Request) => {
+      seenUrl = String(url);
+      return new Response(
+        JSON.stringify({
+          output: [{ type: "message", content: [{ type: "output_text", text: '{"a":' }, { type: "output_text", text: '1}' }] }],
+        }),
+        { status: 200 },
+      );
+    }) as typeof fetch;
+    const complete = openaiResponsesCompletion({
+      endpoint: "https://opencode.ai/zen/v1",
+      apiKey: "k",
+      model: "muse-spark-1.3-contributor-free",
+      fetchImpl,
+    });
+    assert.equal(await complete("sys", "user"), '{"a":1}');
+    assert.ok(seenUrl.endsWith("/responses"));
   });
 });

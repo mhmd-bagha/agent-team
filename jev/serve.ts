@@ -2,7 +2,7 @@ import { createServer, IncomingMessage, Server, ServerResponse } from "node:http
 import { JevClient } from "./client.js";
 import { JevError } from "./errors.js";
 import { FakeJevClient } from "./fake.js";
-import { LlmJevClient, openaiCompatibleCompletion } from "./llm.js";
+import { LlmJevClient, openaiCompatibleCompletion, openaiResponsesCompletion } from "./llm.js";
 import { JevDecision, JevDecisionRequest } from "./types.js";
 
 export interface JevServerOptions {
@@ -93,16 +93,23 @@ export function clientFromEnv(env: NodeJS.ProcessEnv = process.env): LlmJevClien
   const endpoint = env["JEV_PROVIDER_ENDPOINT"] ?? "";
   const apiKey = env["JEV_PROVIDER_API_KEY"] ?? "";
   const model = env["JEV_PROVIDER_MODEL"] ?? env["JEV_MODEL"] ?? "";
+  // Wire format: "chat" (default, /chat/completions) or "responses" (/responses,
+  // e.g. OpenCode Zen for muse-spark-1.3-contributor-free).
+  const api = (env["JEV_PROVIDER_API"] ?? "chat").trim().toLowerCase();
   if (!endpoint || !apiKey || !model) {
     throw new JevError(
       "NOT_CONFIGURED",
       "Set JEV_PROVIDER_ENDPOINT, JEV_PROVIDER_API_KEY, and JEV_PROVIDER_MODEL (or JEV_MODEL).",
     );
   }
-  return new LlmJevClient({
-    model,
-    complete: openaiCompatibleCompletion({ endpoint, apiKey, model }),
-  });
+  if (api !== "chat" && api !== "responses") {
+    throw new JevError("NOT_CONFIGURED", 'JEV_PROVIDER_API must be "chat" or "responses".');
+  }
+  const complete =
+    api === "responses"
+      ? openaiResponsesCompletion({ endpoint, apiKey, model })
+      : openaiCompatibleCompletion({ endpoint, apiKey, model });
+  return new LlmJevClient({ model, complete });
 }
 
 /* CLI: `node dist/jev/serve.js` (after `npm run build`). No secrets in output. */

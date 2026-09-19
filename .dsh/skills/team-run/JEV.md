@@ -178,6 +178,18 @@ so sessions point `JEV_ENDPOINT` at the loopback server and change nothing
 else. Without provider vars the server runs the deterministic fake backend
 (typed decisions, offline-safe) instead of failing.
 
+Provider notes:
+
+- OpenCode Zen free-tier models (e.g. `muse-spark-1.3-contributor-free`)
+  return `FreeTierError` outside OpenCode — the free tier only works from
+  within OpenCode sessions. External live mode needs Zen credits (paid
+  models) or a third-party key (DeepSeek/OpenRouter/compatible gateway).
+- Inside an OpenCode session, the team-lead can act as the decision layer
+  directly: the `team-run` skill rules (thresholds, precedence, fallbacks)
+  apply to its own judgments — no server needed.
+- Contributor-tier free models may use prompts for training (see Zen
+  privacy notes); never send secrets or private data as Jev context.
+
 ## 7. Performance
 
 - One shared state + many typed questions → **one** Jev call (`decideBatch`).

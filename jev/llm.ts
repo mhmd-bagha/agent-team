@@ -213,3 +213,73 @@ export function openaiCompatibleCompletion(options: OpenAiCompatibleOptions): Co
     }
   };
 }
+
+/**
+ * OpenAI Responses-API shim (`POST {base}/responses`), e.g. OpenCode Zen
+ * `https://opencode.ai/zen/v1` for `muse-spark-1.3-contributor-free`.
+ * Same CompleteFn contract; only the wire format differs.
+ */
+export function openaiResponsesCompletion(options: OpenAiCompatibleOptions): CompleteFn {
+  const base = options.endpoint.replace(/\/+$/, "");
+  const timeoutMs = options.timeoutMs ?? 60_000;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  return async (system: string, user: string): Promise<string> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetchImpl(`${base}/responses`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${options.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: options.model,
+          input: [
+            { role: "system", content: system },
+            { role: "user", content: user },
+          ],
+        }),
+        signal: controller.signal,
+      });
+      if (response.status === 401 || response.status === 403) {
+        throw new JevError("AUTH", "Jev provider rejected credentials.");
+      }
+      if (!response.ok) {
+        throw new JevError("NETWORK", `Jev provider failed (status ${response.status}).`, true);
+      }
+      const payload = (await response.json()) as {
+        output?: { type?: string; content?: { type?: string; text?: string }[] }[];
+        output_text?: string;
+      };
+      let content: string | undefined;
+      if (typeof payload.output_text === "string") {
+        content = payload.output_text;
+      } else {
+        for (const item of payload.output ?? []) {
+          for (const part of item.content ?? []) {
+            if (typeof part.text === "string" && part.text.length > 0) {
+              content = (content ?? "") + part.text;
+            }
+          }
+        }
+      }
+      if (!content) {
+        throw new JevError("BAD_RESPONSE", "Jev provider returned empty content.");
+      }
+      return content;
+    } catch (err) {
+      if (err instanceof JevError) throw err;
+      if (err instanceof Error && err.name === "AbortError") {
+        throw new JevError("TIMEOUT", `Jev provider timed out after ${timeoutMs}ms.`, true);
+      }
+      throw new JevError(
+        "NETWORK",
+        err instanceof Error ? `Jev provider network failure: ${err.message}` : "Jev provider network failure.",
+        true,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+}
