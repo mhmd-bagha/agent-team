@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "max_parallel_agents": 6,
   "max_convergence_rounds": 8,
   "confidence_target": 0.95,

@@ -345,7 +345,7 @@ NEXT: <next action>
 | --- | --- |
 | `TEAM.md` | The team contract: mission, 16 operating rules, stop conditions, hard blockers |
 | `config/team-policy.json` | Policy knobs: 6 parallel agents, 8 convergence rounds, 0.95 target, blocking severities, required gates — plus the `jev` decision-layer section (gates, thresholds, timeout; secrets via `JEV_*` env) |
-| `jev/` | Jev typed decision layer (provider-neutral TS): client, decisions, policy fallbacks, telemetry, fake test adapter. Disabled entirely with `JEV_ENABLED=false` |
+| `jev/` | Jev typed decision layer (provider-neutral TS): client, decisions, policy fallbacks, telemetry, fake test adapter, LLM adapter + loopback server. Disabled entirely with `JEV_ENABLED=false`; live mode via `npm run jev:serve` |
 | `.claude/CLAUDE.md` | Engineering standard, specify-first workflow, reporting rule for Claude-installed projects |
 | `.claude/agents/*.md` | The 9 role prompts (source of truth) |
 | `.claude/skills/team-run/SKILL.md` | The 10-phase team workflow skill (source of truth) |
@@ -367,6 +367,7 @@ NEXT: <next action>
 - `scripts/bootstrap-dsh.sh <project> | --global [--help]` — installs both skills plus role resources into `<project>/.dsh/skills` or `${DSH_HOME:-~/.dsh}/skills`; rejects unknown flags, guards the agent glob, idempotent.
 - `scripts/report.sh <phase> <status> <done> <evidence> [findings] [next]` — emits one team progress report in `STATUS/DONE/EVIDENCE/FINDINGS/NEXT` format.
 - `scripts/jev-doctor.sh` — Jev diagnostics (enabled, endpoint/key/model configured, connectivity, latency, config validity; never prints the key).
+- `npm run jev:serve` — local loopback Jev server (`scripts/jev-serve.sh`): LLM-backed `/v1/decide` when `JEV_PROVIDER_*` is set in `~/.config/agent-team/jev.env`, deterministic fake backend otherwise. Point `JEV_ENDPOINT=http://127.0.0.1:3819` at it.
 - `hooks/verify-before-stop.sh` — optional stop-gate example: lists which of `lint`, `typecheck`, `test`, `build` the current project actually offers, so a final report cannot claim checks that do not exist.
 
 ## Repository Layout
@@ -384,8 +385,10 @@ NEXT: <next action>
 │   ├── WORKFLOW.md              # parallelism, worktrees, confidence, reporting
 │   └── JEV.md                   # Jev decision layer (advisory; disable with JEV_ENABLED=false)
 ├── jev/                         # typed decision layer (TS): client, decisions,
-│                                # policy fallbacks, telemetry, fake test adapter
-│                                # (typecheck: npm run typecheck; tests: npm test)
+│                                # policy fallbacks, telemetry, fake test adapter,
+│                                # LLM adapter (llm.ts), loopback server (serve.ts)
+│                                # (typecheck: npm run typecheck; tests: npm test;
+│                                #  serve: npm run jev:serve)
 ├── providers/
 │   ├── deepseek-harness.md      # DSH role mapping + verified discovery roots
 │   └── portable-agent.md        # 5-capability contract for other runners
@@ -393,6 +396,8 @@ NEXT: <next action>
 │   ├── bootstrap-claude.sh      # per-project Claude installer
 │   ├── bootstrap-dsh.sh         # per-project + global DSH installer
 │   ├── bootstrap-opencode.sh    # per-project + global OpenCode installer (skills + agents)
+│   ├── jev-doctor.sh            # Jev diagnostics (never prints keys)
+│   └── jev-serve.sh             # local loopback Jev server (LLM or fake backend)
 │   └── report.sh                # progress-report emitter
 ├── hooks/
 │   └── verify-before-stop.sh    # stop-gate example

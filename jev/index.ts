@@ -11,6 +11,10 @@ export type {
 export { JevError } from "./errors.js";
 export type { JevErrorCode } from "./errors.js";
 export { FakeJevClient, FailingJevClient } from "./fake.js";
+export { LlmJevClient, openaiCompatibleCompletion } from "./llm.js";
+export type { CompleteFn, LlmJevClientOptions, OpenAiCompatibleOptions } from "./llm.js";
+export { startJevServer, clientFromEnv } from "./serve.js";
+export type { JevServerOptions } from "./serve.js";
 export { loadJevConfig, jevReady, jevDoctorSnapshot } from "./config.js";
 export type { JevConfig, JevFileConfig, JevEnv, JevGateConfig } from "./config.js";
 export {

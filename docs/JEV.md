@@ -147,6 +147,37 @@ JEV_TIMEOUT_MS  # per-attempt timeout, default 1000
 File values in `config/team-policy.json#/jev` provide defaults; env wins for
 endpoint/model/timeout/enabled.
 
+## 6b. Live mode (LLM-backed judgments)
+
+Out of the box Jev answers from deterministic policy (safe, offline). For
+real model judgments, run the loopback adapter server:
+
+```bash
+npm run jev:serve   # reads ~/.config/agent-team/jev.env (mode 600, never committed)
+```
+
+`scripts/jev-serve.sh` sources (creating the template if absent is up to you):
+
+```text
+JEV_PORT=3819
+JEV_ENDPOINT=http://127.0.0.1:3819
+JEV_MODEL=jev-local
+JEV_API_KEY=local                      # server ignores it on loopback
+JEV_PROVIDER_ENDPOINT=https://api.deepseek.com   # OpenAI-compatible
+JEV_PROVIDER_API_KEY=<secret>
+JEV_PROVIDER_MODEL=deepseek-chat
+```
+
+How it fits: `LlmJevClient` (`jev/llm.ts`) turns one `CompleteFn` into typed
+`Choice`/`Score`/`Noul` answers — one LLM call per batched request, strict
+JSON, validated with the same parsers as the client. `openaiCompatibleCompletion`
+covers OpenAI/DeepSeek/OpenRouter-style gateways (temperature 0,
+`json_object`); other providers plug in as a ~10-line `CompleteFn`.
+`jev/serve.ts` exposes the same `/v1/decide` contract as `HttpJevClient`,
+so sessions point `JEV_ENDPOINT` at the loopback server and change nothing
+else. Without provider vars the server runs the deterministic fake backend
+(typed decisions, offline-safe) instead of failing.
+
 ## 7. Performance
 
 - One shared state + many typed questions → **one** Jev call (`decideBatch`).
